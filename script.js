@@ -12,10 +12,11 @@ const CMS_API_KEY = window.__MICROCMS_API_KEY || 'po6QHt5InSCH2S1ZyxGu0s6L0SqvEK
 
 // State
 let currentFilter = 'all';
-let currentView = 'list';
+let currentView = window.matchMedia('(max-width: 1024px)').matches ? 'grid' : 'list';
 let selectedProjectId = null;
 let selectedArchiveId = null;
 let currentPage = 'works';
+let archiveMobileLayout = window.matchMedia('(max-width: 1024px)').matches;
 
 // DOM Elements
 const worksPage = document.getElementById('works-page');
@@ -91,6 +92,17 @@ filterTabs.forEach(tab => {
 const viewListBtn = document.getElementById('view-list');
 const viewGridBtn = document.getElementById('view-grid');
 
+function syncViewToggleUI() {
+  if (!viewListBtn || !viewGridBtn) return;
+  if (currentView === 'grid') {
+    viewGridBtn.classList.add('active');
+    viewListBtn.classList.remove('active');
+  } else {
+    viewListBtn.classList.add('active');
+    viewGridBtn.classList.remove('active');
+  }
+}
+
 viewListBtn.addEventListener('click', () => {
   currentView = 'list';
   viewListBtn.classList.add('active');
@@ -104,6 +116,8 @@ viewGridBtn.addEventListener('click', () => {
   viewListBtn.classList.remove('active');
   renderProjects();
 });
+
+syncViewToggleUI();
 
 // Helpers
 function getProjectCategoryLabel(project) {
@@ -565,13 +579,81 @@ function extractYoutubeId(url) {
   return null;
 }
 
-// Render Projects
-function renderProjects() {
-  const filteredProjects = projects.filter(p => {
+function getFilteredProjects() {
+  return projects.filter((p) => {
     if (currentFilter === 'all') return true;
     const categoryValues = getProjectCategory1Values(p);
     return categoryValues.includes(currentFilter.toLowerCase());
   });
+}
+
+function updateWorksDetailNavigationState() {
+  const isDisabled = getFilteredProjects().length <= 1;
+  [
+    'works-prev-button',
+    'works-next-button',
+    'works-prev-button-bottom',
+    'works-next-button-bottom'
+  ].forEach((id) => {
+    const btn = document.getElementById(id);
+    if (btn) btn.disabled = isDisabled;
+  });
+}
+
+function updateArchiveDetailNavigationState() {
+  const isDisabled = archives.length <= 1;
+  [
+    'archive-prev-button',
+    'archive-next-button',
+    'archive-prev-button-bottom',
+    'archive-next-button-bottom'
+  ].forEach((id) => {
+    const btn = document.getElementById(id);
+    if (btn) btn.disabled = isDisabled;
+  });
+}
+
+function showAdjacentProject(direction) {
+  const items = getFilteredProjects();
+  if (!items.length || selectedProjectId == null) return;
+  if (items.length === 1) {
+    showProjectDetail(items[0]);
+    return;
+  }
+
+  const currentIndex = items.findIndex((item) => item.id === selectedProjectId);
+  const baseIndex = currentIndex >= 0 ? currentIndex : 0;
+  const nextIndex = (baseIndex + direction + items.length) % items.length;
+  showProjectDetail(items[nextIndex]);
+}
+
+function showAdjacentArchive(direction) {
+  if (!archives.length || selectedArchiveId == null) return;
+  if (archives.length === 1) {
+    showArchiveDetail(archives[0]);
+    return;
+  }
+
+  const currentIndex = archives.findIndex((item) => item.id === selectedArchiveId);
+  const baseIndex = currentIndex >= 0 ? currentIndex : 0;
+  const nextIndex = (baseIndex + direction + archives.length) % archives.length;
+  showArchiveDetail(archives[nextIndex]);
+}
+
+function animateDetailSwitch(container) {
+  if (!container) return;
+  container.classList.remove('is-switching');
+  // Reflow to restart the same animation on repeated clicks.
+  void container.offsetWidth;
+  container.classList.add('is-switching');
+  window.setTimeout(() => {
+    container.classList.remove('is-switching');
+  }, 280);
+}
+
+// Render Projects
+function renderProjects() {
+  const filteredProjects = getFilteredProjects();
 
   projectsList.innerHTML = '';
 
@@ -662,6 +744,7 @@ function renderArchiveDetailBody(archive) {
 }
 
 function showArchiveDetail(archive, updateHash = true) {
+  const prevId = selectedArchiveId;
   selectedArchiveId = archive.id;
 
   const slug = getArchiveSlug(archive);
@@ -676,11 +759,17 @@ function showArchiveDetail(archive, updateHash = true) {
   archivePage.querySelector('.page-header').style.display = 'none';
   archiveDetail.classList.add('active');
 
+  const archiveDetailContent = archiveDetail.querySelector('.detail-content');
+  if (prevId && prevId !== archive.id) {
+    animateDetailSwitch(archiveDetailContent);
+  }
+
   document.getElementById('archive-detail-date').textContent = getArchiveDate(archive);
   document.getElementById('archive-detail-title').textContent = getArchiveTitle(archive);
   document.getElementById('archive-detail-hero-img').src = getArchiveHeroUrl(archive);
   document.getElementById('archive-detail-hero-img').alt = getArchiveTitle(archive);
   renderArchiveDetailBody(archive);
+  updateArchiveDetailNavigationState();
 }
 
 function hideArchiveDetail(updateHash = true) {
@@ -700,29 +789,53 @@ function renderArchives() {
 
   archiveList.innerHTML = '';
 
+  const isMobile = window.matchMedia('(max-width: 1024px)').matches;
+  archiveMobileLayout = isMobile;
+  archiveList.className = isMobile ? 'projects-grid archive-grid' : 'projects-list archive-list';
+
   archives.forEach((archive, index) => {
-    const archiveItem = document.createElement('div');
-    archiveItem.className = 'project-item';
-    archiveItem.style.animationDelay = `${index * 0.05}s`;
     const thumbUrl = getArchiveThumbUrl(archive);
     const title = getArchiveTitle(archive);
     const date = getArchiveDate(archive);
 
-    archiveItem.innerHTML = `
-      <div class="project-left">
-        <div class="project-title-wrapper">
-          <h3 class="project-title">${escapeHtml(title)}</h3>
-          <div class="project-strike"></div>
+    const archiveItem = document.createElement('div');
+    archiveItem.style.animationDelay = `${index * 0.05}s`;
+
+    if (isMobile) {
+      archiveItem.className = 'project-grid-item';
+      archiveItem.innerHTML = `
+        <div class="project-grid-thumb">
+          ${thumbUrl ? `<img src="${thumbUrl}?w=900&fit=max&q=75" alt="${escapeHtml(title)}" loading="lazy" />` : '<div class="project-grid-thumb-empty"></div>'}
         </div>
-        <div class="project-meta">
-          <span class="project-category">Archive</span>
-          <span class="project-year">${escapeHtml(date)}</span>
+        <div class="project-grid-info">
+          <div class="project-title-wrapper">
+            <h3 class="project-title">${escapeHtml(title)}</h3>
+            <div class="project-strike"></div>
+          </div>
+          <div class="project-meta">
+            <span class="project-category">Archive</span>
+            <span class="project-year">${escapeHtml(date)}</span>
+          </div>
         </div>
-      </div>
-      <div class="project-preview">
-        ${thumbUrl ? `<img src="${thumbUrl}?w=1000&fit=max&q=75" alt="${escapeHtml(title)}" />` : ''}
-      </div>
-    `;
+      `;
+    } else {
+      archiveItem.className = 'project-item';
+      archiveItem.innerHTML = `
+        <div class="project-left">
+          <div class="project-title-wrapper">
+            <h3 class="project-title">${escapeHtml(title)}</h3>
+            <div class="project-strike"></div>
+          </div>
+          <div class="project-meta">
+            <span class="project-category">Archive</span>
+            <span class="project-year">${escapeHtml(date)}</span>
+          </div>
+        </div>
+        <div class="project-preview">
+          ${thumbUrl ? `<img src="${thumbUrl}?w=1000&fit=max&q=75" alt="${escapeHtml(title)}" />` : ''}
+        </div>
+      `;
+    }
 
     archiveItem.addEventListener('click', () => showArchiveDetail(archive));
     archiveList.appendChild(archiveItem);
@@ -731,10 +844,20 @@ function renderArchives() {
   if (!archives.length) {
     archiveList.innerHTML = '<p>アーカイブデータはまだありません。</p>';
   }
+
+  updateArchiveDetailNavigationState();
 }
+
+window.addEventListener('resize', () => {
+  const nextIsMobile = window.matchMedia('(max-width: 1024px)').matches;
+  if (nextIsMobile !== archiveMobileLayout && archives.length) {
+    renderArchives();
+  }
+});
 
 // Project Detail
 function showProjectDetail(project, updateHash = true) {
+  const prevId = selectedProjectId;
   selectedProjectId = project.id;
 
   // URL ハッシュを #/works/slug に更新
@@ -751,6 +874,11 @@ function showProjectDetail(project, updateHash = true) {
   document.querySelector('.filter-tabs').style.display = 'none';
   document.querySelector('.page-header').style.display = 'none';
   projectDetail.classList.add('active');
+
+  const worksDetailContent = projectDetail.querySelector('.detail-content');
+  if (prevId && prevId !== project.id) {
+    animateDetailSwitch(worksDetailContent);
+  }
   
   // Populate detail
   const category1Raw = project.category1;
@@ -767,6 +895,7 @@ function showProjectDetail(project, updateHash = true) {
   document.getElementById('detail-hero-img').src = getProjectHeroUrl(project);
   document.getElementById('detail-hero-img').alt = project.title;
   renderDetailBody(project);
+  updateWorksDetailNavigationState();
 }
 
 function hideProjectDetail(updateHash = true) {
@@ -839,6 +968,14 @@ document.getElementById('back-button').addEventListener('click', hideProjectDeta
 document.getElementById('back-button-bottom').addEventListener('click', hideProjectDetail);
 document.getElementById('archive-back-button').addEventListener('click', hideArchiveDetail);
 document.getElementById('archive-back-button-bottom').addEventListener('click', hideArchiveDetail);
+document.getElementById('works-prev-button').addEventListener('click', () => showAdjacentProject(-1));
+document.getElementById('works-next-button').addEventListener('click', () => showAdjacentProject(1));
+document.getElementById('works-prev-button-bottom').addEventListener('click', () => showAdjacentProject(-1));
+document.getElementById('works-next-button-bottom').addEventListener('click', () => showAdjacentProject(1));
+document.getElementById('archive-prev-button').addEventListener('click', () => showAdjacentArchive(-1));
+document.getElementById('archive-next-button').addEventListener('click', () => showAdjacentArchive(1));
+document.getElementById('archive-prev-button-bottom').addEventListener('click', () => showAdjacentArchive(-1));
+document.getElementById('archive-next-button-bottom').addEventListener('click', () => showAdjacentArchive(1));
 
 // Initial Render
 //renderProjects();

@@ -242,6 +242,13 @@ html {
   box-sizing: border-box;
 }
 
+@media (max-width: 1024px) {
+  .projects-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
 .project-grid-item {
   cursor: pointer;
   opacity: 0;
@@ -297,6 +304,19 @@ html {
   gap: 0.25rem;
 }
 
+.project-grid-info .project-meta {
+  justify-content: flex-start;
+}
+
+.project-grid-info .project-category {
+  display: block;
+}
+
+.project-grid-info .project-year {
+  margin-left: 0;
+  text-align: left;
+}
+
 .project-item {
   display: flex;
   align-items: center;
@@ -335,7 +355,7 @@ html {
 .project-category,
 .project-year {
   font-size: 0.5rem;
-  color: var(--text-lighter);
+  color: #b8b8b8;
   letter-spacing: 0.2em;
   text-transform: uppercase;
 }
@@ -403,7 +423,7 @@ html {
 
 .project-category {
   font-size: 0.5rem;
-  color: var(--text-lighter);
+  color: #b8b8b8;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   display: none;
@@ -545,6 +565,62 @@ html {
   padding: 2rem 0;
 }
 
+.detail-nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.detail-switch-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detail-switch-sep {
+  font-family: var(--font-sans);
+  font-size: 0.5625rem;
+  letter-spacing: 0.1em;
+  color: rgba(0, 0, 255, 0.55);
+  line-height: 1;
+}
+
+.detail-switch-button {
+  font-family: var(--font-sans);
+  font-size: 0.5625rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--vibrant-blue);
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: opacity 0.25s ease;
+  padding: 0.125rem 0;
+}
+
+.detail-switch-arrow {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.detail-switch-button:hover {
+  opacity: 0.65;
+}
+
+.detail-switch-button:hover .detail-switch-arrow-prev {
+  transform: translateX(-0.125rem);
+}
+
+.detail-switch-button:hover .detail-switch-arrow-next {
+  transform: translateX(0.125rem);
+}
+
+.detail-switch-button:disabled {
+  opacity: 0.28;
+  cursor: default;
+}
+
 .back-button {
   display: flex;
   align-items: center;
@@ -577,6 +653,10 @@ html {
   display: flex;
   flex-direction: column;
   gap: 2rem;
+}
+
+.detail-content.is-switching {
+  animation: fadeInUp 0.26s ease;
 }
 
 .detail-header {
@@ -1124,6 +1204,22 @@ html {
   .image-lightbox-img {
     max-width: 88vw;
     max-height: 75vh;
+  }
+}
+
+@media (max-width: 1024px) {
+  .container {
+    padding: 0 1rem;
+  }
+
+  .filter-tabs {
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+    flex-wrap: wrap;
+  }
+
+  .view-toggle {
+    margin-left: auto;
   }
 }
 
