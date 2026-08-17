@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tokubo Haruto</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Zen+Old+Mincho:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500&display=swap"
+    rel="stylesheet">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div id="app" class="app">
+    <div class="container">
+      <!-- Navbar -->
+      <nav class="navbar">
+        <div class="nav-header">
+          <div class="nav-logo">tocuvo.com</div>
+          <div class="nav-tabs">
+            <button id="nav-works" class="nav-tab active">
+              works
+              <div class="nav-underline"></div>
+            </button>
+            <button id="nav-archive" class="nav-tab">
+              archive
+              <div class="nav-underline"></div>
+            </button>
+            <button id="nav-about" class="nav-tab">
+              about
+              <div class="nav-underline"></div>
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Works Page -->
+        <div id="works-page" class="page active">
+          <header class="page-header">
+            <h1 class="page-title"></h1>
+          </header>
+
+          <!-- Floating Image Preview -->
+          <div id="floating-image" class="floating-image">
+            <div class="floating-image-inner">
+              <img id="floating-img" src="" alt="preview" />
+            </div>
+            <div class="floating-caption">
+              <span id="floating-category" class="floating-category-text"></span>
+              <span class="floating-hex">#0000ff</span>
+            </div>
+          </div>
+
+          <!-- Filter Tabs -->
+          <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">
+              All
+              <div class="filter-underline"></div>
+            </button>
+            <button class="filter-tab" data-filter="design">
+              Design
+              <div class="filter-underline"></div>
+            </button>
+            <button class="filter-tab" data-filter="artwork">
+              Artworks
+              <div class="filter-underline"></div>
+            </button>
+            <div class="view-toggle">
+              <button id="view-list" class="view-toggle-btn active">List</button>
+              <span class="view-toggle-sep">/</span>
+              <button id="view-grid" class="view-toggle-btn">Grid</button>
+            </div>
+          </div>
+
+          <!-- Projects List -->
+          <div id="projects-list" class="projects-list"></div>
+
+          <!-- Project Detail -->
+          <div id="project-detail" class="project-detail">
+            <div class="detail-nav">
+              <button id="back-button" class="back-button">
+                <span class="back-arrow">←</span>
+                Back
+              </button>
+            </div>
+            
+            <div class="detail-content">
+              <div class="detail-hero">
+                <img id="detail-hero-img" src="" alt="" />
+              </div>
+              <header class="detail-header">
+                <div class="detail-meta-top">
+                  <span id="detail-category1" class="detail-category1-badge"></span>
+                  <span id="detail-category2" class="detail-category-badge"></span>
+                  <span id="detail-year" class="detail-year-badge"></span>
+                </div>
+                <h2 id="detail-title" class="detail-title"></h2>
+                <p id="detail-subtitle" class="detail-subtitle-text"></p>
+              </header>
+
+              <div id="detail-body" class="detail-body-content">
+              </div>
+
+              <div class="detail-nav detail-nav-bottom">
+                <button id="back-button-bottom" class="back-button">
+                  <span class="back-arrow">←</span>
+                  Back
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- About Page -->
+        <div id="about-page" class="page">
+          <div id="about-content" class="about-content">
+            <p class="about-loading">Loading profile...</p>
+          </div>
+        </div>
+
+        <!-- Archive Page -->
+        <div id="archive-page" class="page">
+          <header class="page-header">
+            <h1 class="page-title"></h1>
+          </header>
+
+          <div id="archive-list" class="projects-list"></div>
+
+          <div id="archive-detail" class="project-detail">
+            <div class="detail-nav">
+              <button id="archive-back-button" class="back-button">
+                <span class="back-arrow">←</span>
+                Back
+              </button>
+            </div>
+
+            <div class="detail-content">
+              <div class="detail-hero">
+                <img id="archive-detail-hero-img" src="" alt="" />
+              </div>
+              <header class="detail-header">
+                <div class="detail-meta-top">
+                  <span id="archive-detail-date" class="detail-year-badge"></span>
+                </div>
+                <h2 id="archive-detail-title" class="detail-title"></h2>
+              </header>
+
+              <div id="archive-detail-body" class="detail-body-content"></div>
+
+              <div class="detail-nav detail-nav-bottom">
+                <button id="archive-back-button-bottom" class="back-button">
+                  <span class="back-arrow">←</span>
+                  Back
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <p>tocubo.com</p>
+      </footer>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
