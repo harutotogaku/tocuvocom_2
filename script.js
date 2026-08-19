@@ -32,12 +32,17 @@ let aboutData = null;
 
 // Navigation
 const navWorks = document.getElementById('nav-works');
+const navLogo = document.getElementById('nav-logo');
 const navArchive = document.getElementById('nav-archive');
 const navAbout = document.getElementById('nav-about');
 
 navWorks.addEventListener('click', (e) => {
   e.preventDefault();
   location.hash = '#/works';
+});
+navLogo.addEventListener('click', () => {
+  location.hash = '#/works';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 navArchive.addEventListener('click', (e) => {
   e.preventDefault();
@@ -983,7 +988,7 @@ async function fetchWorksData() {
   projectsList.innerHTML = '<p>Loading works...</p>';
 
   try {
-    const response = await fetch(`https://${CMS_CONFIG.serviceDomain}.microcms.io/api/v1/${CMS_CONFIG.endpoint}`, {
+    const response = await fetch(`https://${CMS_CONFIG.serviceDomain}.microcms.io/api/v1/${CMS_CONFIG.endpoint}?limit=100`, {
       headers: {
         'X-MICROCMS-API-KEY': CMS_API_KEY
       }
@@ -1010,7 +1015,7 @@ async function fetchArchiveData() {
   archiveList.innerHTML = '<p>Loading archive...</p>';
 
   try {
-    const response = await fetch(`https://${CMS_CONFIG.serviceDomain}.microcms.io/api/v1/archive`, {
+    const response = await fetch(`https://${CMS_CONFIG.serviceDomain}.microcms.io/api/v1/archive?limit=100&orders=-publishedAt`, {
       headers: {
         'X-MICROCMS-API-KEY': CMS_API_KEY
       }

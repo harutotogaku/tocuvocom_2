@@ -62,12 +62,18 @@ html {
 }
 
 .nav-logo {
+  appearance: none;
+  border: 0;
+  background: transparent;
   font-size: 0.875rem;
   font-weight: 500;
   letter-spacing: -0.01em;
   color: #333;
   opacity: 0;
   animation: fadeIn 0.5s ease forwards;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
 }
 
 .nav-tabs {
