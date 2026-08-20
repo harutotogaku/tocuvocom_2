@@ -13,10 +13,10 @@ const CMS_API_KEY = window.__MICROCMS_API_KEY || 'po6QHt5InSCH2S1ZyxGu0s6L0SqvEK
 // State
 let currentFilter = 'all';
 let currentView = window.matchMedia('(max-width: 1024px)').matches ? 'grid' : 'list';
+let archiveView = window.matchMedia('(max-width: 1024px)').matches ? 'grid' : 'list';
 let selectedProjectId = null;
 let selectedArchiveId = null;
 let currentPage = 'works';
-let archiveMobileLayout = window.matchMedia('(max-width: 1024px)').matches;
 
 // DOM Elements
 const worksPage = document.getElementById('works-page');
@@ -26,6 +26,7 @@ const projectsList = document.getElementById('projects-list');
 const projectDetail = document.getElementById('project-detail');
 const archiveList = document.getElementById('archive-list');
 const archiveDetail = document.getElementById('archive-detail');
+const archiveToolbar = document.getElementById('archive-toolbar');
 const aboutContent = document.getElementById('about-content');
 
 let aboutData = null;
@@ -96,6 +97,8 @@ filterTabs.forEach(tab => {
 // View Toggle
 const viewListBtn = document.getElementById('view-list');
 const viewGridBtn = document.getElementById('view-grid');
+const archiveViewListBtn = document.getElementById('archive-view-list');
+const archiveViewGridBtn = document.getElementById('archive-view-grid');
 
 function syncViewToggleUI() {
   if (!viewListBtn || !viewGridBtn) return;
@@ -123,6 +126,31 @@ viewGridBtn.addEventListener('click', () => {
 });
 
 syncViewToggleUI();
+
+function syncArchiveViewToggleUI() {
+  if (!archiveViewListBtn || !archiveViewGridBtn) return;
+  if (archiveView === 'grid') {
+    archiveViewGridBtn.classList.add('active');
+    archiveViewListBtn.classList.remove('active');
+  } else {
+    archiveViewListBtn.classList.add('active');
+    archiveViewGridBtn.classList.remove('active');
+  }
+}
+
+archiveViewListBtn.addEventListener('click', () => {
+  archiveView = 'list';
+  syncArchiveViewToggleUI();
+  renderArchives();
+});
+
+archiveViewGridBtn.addEventListener('click', () => {
+  archiveView = 'grid';
+  syncArchiveViewToggleUI();
+  renderArchives();
+});
+
+syncArchiveViewToggleUI();
 
 // Helpers
 function getProjectCategoryLabel(project) {
@@ -722,6 +750,14 @@ function renderArchiveDetailBody(archive) {
   let html = '';
   let imageHtml = '';
 
+  if (archive.archive_video && typeof archive.archive_video === 'string' && archive.archive_video.trim()) {
+    const videoId = extractYoutubeId(archive.archive_video);
+    if (videoId) {
+      const embedUrl = `https://www.youtube.com/embed/${videoId}?modestbranding=1`;
+      html += `<div class="detail-video"><iframe width="100%" height="400" src="${embedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
+    }
+  }
+
   if (archive.archive_text && typeof archive.archive_text === 'string' && archive.archive_text.trim()) {
     const richText = sanitizeRichText(archive.archive_text);
     html += `<div class="detail-main-text">${richText}</div>`;
@@ -737,7 +773,7 @@ function renderArchiveDetailBody(archive) {
   }
 
   if (imageHtml) {
-    html += `<section class="detail-image-stack">${imageHtml}</section>`;
+    html += `<section class="detail-image-stack archive-image-stack">${imageHtml}</section>`;
   }
 
   if (!html.trim()) {
@@ -761,6 +797,7 @@ function showArchiveDetail(archive, updateHash = true) {
   }
 
   archiveList.style.display = 'none';
+  if (archiveToolbar) archiveToolbar.style.display = 'none';
   archivePage.querySelector('.page-header').style.display = 'none';
   archiveDetail.classList.add('active');
 
@@ -785,6 +822,7 @@ function hideArchiveDetail(updateHash = true) {
   }
 
   archiveList.style.display = '';
+  if (archiveToolbar) archiveToolbar.style.display = 'flex';
   archivePage.querySelector('.page-header').style.display = 'block';
   archiveDetail.classList.remove('active');
 }
@@ -793,10 +831,7 @@ function renderArchives() {
   if (!archiveList) return;
 
   archiveList.innerHTML = '';
-
-  const isMobile = window.matchMedia('(max-width: 1024px)').matches;
-  archiveMobileLayout = isMobile;
-  archiveList.className = isMobile ? 'projects-grid archive-grid' : 'projects-list archive-list';
+  archiveList.className = archiveView === 'grid' ? 'projects-grid archive-grid' : 'projects-list archive-list';
 
   archives.forEach((archive, index) => {
     const thumbUrl = getArchiveThumbUrl(archive);
@@ -806,7 +841,7 @@ function renderArchives() {
     const archiveItem = document.createElement('div');
     archiveItem.style.animationDelay = `${index * 0.05}s`;
 
-    if (isMobile) {
+    if (archiveView === 'grid') {
       archiveItem.className = 'project-grid-item';
       archiveItem.innerHTML = `
         <div class="project-grid-thumb">
@@ -852,13 +887,6 @@ function renderArchives() {
 
   updateArchiveDetailNavigationState();
 }
-
-window.addEventListener('resize', () => {
-  const nextIsMobile = window.matchMedia('(max-width: 1024px)').matches;
-  if (nextIsMobile !== archiveMobileLayout && archives.length) {
-    renderArchives();
-  }
-});
 
 // Project Detail
 function showProjectDetail(project, updateHash = true) {
@@ -1015,7 +1043,7 @@ async function fetchArchiveData() {
   archiveList.innerHTML = '<p>Loading archive...</p>';
 
   try {
-    const response = await fetch(`https://${CMS_CONFIG.serviceDomain}.microcms.io/api/v1/archive?limit=100&orders=-publishedAt`, {
+    const response = await fetch(`https://${CMS_CONFIG.serviceDomain}.microcms.io/api/v1/archive?limit=100`, {
       headers: {
         'X-MICROCMS-API-KEY': CMS_API_KEY
       }
