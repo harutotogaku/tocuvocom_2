@@ -12,8 +12,8 @@ const CMS_API_KEY = window.__MICROCMS_API_KEY || 'po6QHt5InSCH2S1ZyxGu0s6L0SqvEK
 
 // State
 let currentFilter = 'all';
-let currentView = window.matchMedia('(max-width: 1024px)').matches ? 'grid' : 'list';
-let archiveView = window.matchMedia('(max-width: 1024px)').matches ? 'grid' : 'list';
+let currentView = 'grid';
+let archiveView = 'grid';
 let selectedProjectId = null;
 let selectedArchiveId = null;
 let currentPage = 'works';
@@ -97,45 +97,39 @@ filterTabs.forEach(tab => {
 // View Toggle
 const viewListBtn = document.getElementById('view-list');
 const viewGridBtn = document.getElementById('view-grid');
+const viewWideBtn = document.getElementById('view-wide');
 const archiveViewListBtn = document.getElementById('archive-view-list');
 const archiveViewGridBtn = document.getElementById('archive-view-grid');
+const archiveViewWideBtn = document.getElementById('archive-view-wide');
 
 function syncViewToggleUI() {
-  if (!viewListBtn || !viewGridBtn) return;
-  if (currentView === 'grid') {
-    viewGridBtn.classList.add('active');
-    viewListBtn.classList.remove('active');
-  } else {
-    viewListBtn.classList.add('active');
-    viewGridBtn.classList.remove('active');
-  }
+  [[viewListBtn, 'list'], [viewGridBtn, 'grid'], [viewWideBtn, 'wide']]
+    .forEach(([button, view]) => button?.classList.toggle('active', currentView === view));
 }
 
 viewListBtn.addEventListener('click', () => {
   currentView = 'list';
-  viewListBtn.classList.add('active');
-  viewGridBtn.classList.remove('active');
+  syncViewToggleUI();
   renderProjects();
 });
 
 viewGridBtn.addEventListener('click', () => {
   currentView = 'grid';
-  viewGridBtn.classList.add('active');
-  viewListBtn.classList.remove('active');
+  syncViewToggleUI();
+  renderProjects();
+});
+
+viewWideBtn.addEventListener('click', () => {
+  currentView = 'wide';
+  syncViewToggleUI();
   renderProjects();
 });
 
 syncViewToggleUI();
 
 function syncArchiveViewToggleUI() {
-  if (!archiveViewListBtn || !archiveViewGridBtn) return;
-  if (archiveView === 'grid') {
-    archiveViewGridBtn.classList.add('active');
-    archiveViewListBtn.classList.remove('active');
-  } else {
-    archiveViewListBtn.classList.add('active');
-    archiveViewGridBtn.classList.remove('active');
-  }
+  [[archiveViewListBtn, 'list'], [archiveViewGridBtn, 'grid'], [archiveViewWideBtn, 'wide']]
+    .forEach(([button, view]) => button?.classList.toggle('active', archiveView === view));
 }
 
 archiveViewListBtn.addEventListener('click', () => {
@@ -146,6 +140,12 @@ archiveViewListBtn.addEventListener('click', () => {
 
 archiveViewGridBtn.addEventListener('click', () => {
   archiveView = 'grid';
+  syncArchiveViewToggleUI();
+  renderArchives();
+});
+
+archiveViewWideBtn.addEventListener('click', () => {
+  archiveView = 'wide';
   syncArchiveViewToggleUI();
   renderArchives();
 });
@@ -494,13 +494,29 @@ function renderDetailBody(project) {
   }
 
   // サブ画像（image）- 複数の形式に対応
-  const imageUrls = extractImageUrls(project.image);
-  if (imageUrls.length > 0) {
-    imageUrls.forEach((url, idx) => {
-      const previewSrc = `${url}?w=1100&h=1500&fit=max&q=70`;
-      const lightboxSrc = `${url}?w=1700&fit=max&q=65`;
-      imageHtml += `<div class="detail-image"><img src="${previewSrc}" data-full-src="${url}" data-lightbox-src="${lightboxSrc}" alt="${project.title || 'Image'} ${idx + 1}" loading="lazy" /></div>`;
-    });
+  const imageItems = extractImageItems(project.image);
+  const isSingleColumn = String(project.image_layout || '').trim().toLowerCase() === '1column';
+  if (imageItems.length > 0) {
+    const renderImage = (item, index) => {
+      const previewSrc = `${item.url}?w=1100&h=1500&fit=max&q=70`;
+      const lightboxSrc = `${item.url}?w=1700&fit=max&q=65`;
+      return `<div class="detail-image"><img src="${previewSrc}" data-full-src="${item.url}" data-lightbox-src="${lightboxSrc}" alt="${project.title || 'Image'} ${index + 1}" loading="lazy" /></div>`;
+    };
+
+    for (let index = 0; index < imageItems.length; index += 1) {
+      const currentImage = imageItems[index];
+      const nextImage = imageItems[index + 1];
+      const hasPortraitPair = isSingleColumn
+        && currentImage.height > currentImage.width
+        && nextImage?.height > nextImage?.width;
+
+      if (hasPortraitPair) {
+        imageHtml += `<div class="detail-image-pair">${renderImage(currentImage, index)}${renderImage(nextImage, index + 1)}</div>`;
+        index += 1;
+      } else {
+        imageHtml += renderImage(currentImage, index);
+      }
+    }
   }
 
   // YouTube動画リンク
@@ -547,7 +563,8 @@ function renderDetailBody(project) {
   }
 
   if (imageHtml) {
-    html += `<section class="detail-image-stack">${imageHtml}</section>`;
+    const imageLayoutClass = isSingleColumn ? ' image-layout-1column' : '';
+    html += `<section class="detail-image-stack${imageLayoutClass}">${imageHtml}</section>`;
   }
 
   if (!html.trim()) {
@@ -577,6 +594,16 @@ function extractImageUrls(imageField) {
   if (url) urls.push(url);
 
   return urls;
+}
+
+function extractImageItems(imageField) {
+  const entries = Array.isArray(imageField) ? imageField : [imageField];
+
+  return entries.map((entry) => ({
+    url: extractSingleImageUrl(entry),
+    width: Number(entry?.width) || 0,
+    height: Number(entry?.height) || 0
+  })).filter((entry) => entry.url);
 }
 
 function extractSingleImageUrl(item) {
@@ -690,8 +717,8 @@ function renderProjects() {
 
   projectsList.innerHTML = '';
 
-  if (currentView === 'grid') {
-    projectsList.className = 'projects-grid';
+  if (currentView === 'grid' || currentView === 'wide') {
+    projectsList.className = currentView === 'wide' ? 'projects-grid wide-grid' : 'projects-grid';
     filteredProjects.forEach((project, index) => {
       const thumbUrl = getProjectThumbUrl(project);
       const item = document.createElement('div');
@@ -699,7 +726,7 @@ function renderProjects() {
       item.style.animationDelay = `${index * 0.05}s`;
       item.innerHTML = `
         <div class="project-grid-thumb">
-          ${thumbUrl ? `<img src="${thumbUrl}?w=800&fit=max&q=75" alt="${project.title}" loading="lazy" />` : '<div class="project-grid-thumb-empty"></div>'}
+          ${thumbUrl ? `<img src="${thumbUrl}?w=${currentView === 'wide' ? 1600 : 800}&fit=max&q=75" alt="${project.title}" loading="lazy" />` : '<div class="project-grid-thumb-empty"></div>'}
         </div>
         <div class="project-grid-info">
           <div class="project-title-wrapper">
@@ -831,7 +858,9 @@ function renderArchives() {
   if (!archiveList) return;
 
   archiveList.innerHTML = '';
-  archiveList.className = archiveView === 'grid' ? 'projects-grid archive-grid' : 'projects-list archive-list';
+  archiveList.className = archiveView === 'list'
+    ? 'projects-list archive-list'
+    : `projects-grid${archiveView === 'wide' ? ' wide-grid' : ''} archive-grid`;
 
   archives.forEach((archive, index) => {
     const thumbUrl = getArchiveThumbUrl(archive);
@@ -841,11 +870,11 @@ function renderArchives() {
     const archiveItem = document.createElement('div');
     archiveItem.style.animationDelay = `${index * 0.05}s`;
 
-    if (archiveView === 'grid') {
+    if (archiveView === 'grid' || archiveView === 'wide') {
       archiveItem.className = 'project-grid-item';
       archiveItem.innerHTML = `
         <div class="project-grid-thumb">
-          ${thumbUrl ? `<img src="${thumbUrl}?w=900&fit=max&q=75" alt="${escapeHtml(title)}" loading="lazy" />` : '<div class="project-grid-thumb-empty"></div>'}
+          ${thumbUrl ? `<img src="${thumbUrl}?w=${archiveView === 'wide' ? 1600 : 900}&fit=max&q=75" alt="${escapeHtml(title)}" loading="lazy" />` : '<div class="project-grid-thumb-empty"></div>'}
         </div>
         <div class="project-grid-info">
           <div class="project-title-wrapper">

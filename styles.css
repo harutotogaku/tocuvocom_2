@@ -254,6 +254,15 @@ html {
   box-sizing: border-box;
 }
 
+.wide-grid {
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+.wide-grid .project-grid-thumb {
+  aspect-ratio: 16 / 7;
+}
+
 @media (max-width: 1024px) {
   .projects-grid {
     grid-template-columns: 1fr;
@@ -907,6 +916,22 @@ html {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
   margin-top: 1.5rem;
+}
+
+.detail-image-stack.image-layout-1column {
+  grid-template-columns: 1fr;
+}
+
+.detail-image-pair {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 1025px) {
+  .detail-image-pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .archive-image-stack {
